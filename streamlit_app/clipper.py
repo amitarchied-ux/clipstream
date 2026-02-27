@@ -530,14 +530,6 @@ class YouTubeClipper:
         except Exception as e:
             logger.error(f"Download error: {e}")
             raise ClipProcessingError(f"Failed to download video: {str(e)}")
-                    logger.info(f"Successfully downloaded to: {downloaded_file}")
-                    return downloaded_file
-
-            return None
-
-        except Exception as e:
-            logger.error(f"Full download error: {e}")
-            return None
 
     def _build_ffmpeg_command_from_file(
         self,
