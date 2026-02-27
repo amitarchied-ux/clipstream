@@ -473,9 +473,7 @@ class YouTubeClipper:
         progress_callback: Optional[Callable[[float], None]] = None
     ) -> Optional[str]:
         """
-        Download a video segment using yt-dlp.
-
-        This is more reliable than using direct stream URLs which can expire.
+        Download video using yt-dlp, then let FFmpeg trim to the exact segment.
 
         Args:
             start_time: Start time in seconds
@@ -485,59 +483,14 @@ class YouTubeClipper:
         Returns:
             Path to downloaded video file or None on error
         """
-        try:
-            # Download a bit more than needed to handle keyframe alignment
-            download_start = max(0, start_time - 5)
-            download_end = min(self._video_info.duration, end_time + 5)
-
-            safe_title = "".join(
-                c for c in self._video_info.title
-                if c.isalnum() or c in (' ', '-', '_')
-            ).rstrip()[:30]
-
-            temp_file = os.path.join(self.temp_dir, f"{safe_title}_temp.mp4")
-
-            ydl_opts = {
-                'format': 'best[ext=mp4]/best',
-                'outtmpl': temp_file,
-                'quiet': True,
-                'no_warnings': True,
-                'download_sections': f'*{download_start}-{download_end}',
-                'force_keyframes_at_cuts': False,
-            }
-
-            logger.info(f"Downloading video segment from {download_start}s to {download_end}s")
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([self.url])
-
-            # Check if file was downloaded (yt-dlp may add .mp4 extension)
-            downloaded_file = temp_file
-            if not os.path.exists(downloaded_file):
-                # Try with .mp4 extension
-                downloaded_file = temp_file + ".mp4"
-                if not os.path.exists(downloaded_file):
-                    # Try with .webm extension
-                    downloaded_file = temp_file.replace('.mp4', '.webm')
-
-            if os.path.exists(downloaded_file):
-                logger.info(f"Successfully downloaded to: {downloaded_file}")
-                return downloaded_file
-            else:
-                logger.error(f"Download file not found: {temp_file}")
-                return None
-
-        except Exception as e:
-            logger.error(f"Download error: {e}")
-            # Fallback: download full video
-            return self._download_full_video(progress_callback)
+        return self._download_full_video(progress_callback)
 
     def _download_full_video(
         self,
         progress_callback: Optional[Callable[[float], None]] = None
     ) -> Optional[str]:
         """
-        Download the full video as fallback.
+        Download the full video.
 
         Args:
             progress_callback: Optional progress callback
@@ -546,29 +499,37 @@ class YouTubeClipper:
             Path to downloaded video file or None on error
         """
         try:
-            safe_title = "".join(
-                c for c in self._video_info.title
-                if c.isalnum() or c in (' ', '-', '_')
-            ).rstrip()[:30]
-
-            temp_file = os.path.join(self.temp_dir, f"{safe_title}_temp.mp4")
+            # Use a simple temp file name
+            temp_file = os.path.join(self.temp_dir, "clipstream_source.mp4")
 
             ydl_opts = {
-                'format': 'best[ext=mp4]/best',
+                'format': 'best[ext=mp4]/bestvideo+bestaudio/best',
                 'outtmpl': temp_file,
                 'quiet': True,
                 'no_warnings': True,
+                'nocheckcertificate': True,
+                'socket_timeout': 60,
             }
 
-            logger.info("Downloading full video as fallback")
+            logger.info(f"Downloading video from: {self.url}")
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([self.url])
 
-            # Check if file exists
+            # Check if file exists (yt-dlp may add .mp4 or .webm extension)
             for ext in ['.mp4', '.webm', '.mkv', '']:
                 downloaded_file = temp_file + ext
-                if os.path.exists(downloaded_file):
+                if os.path.exists(downloaded_file) and os.path.getsize(downloaded_file) > 0:
+                    logger.info(f"Successfully downloaded to: {downloaded_file}")
+                    return downloaded_file
+
+            # List all files in temp dir for debugging
+            logger.error(f"Download failed. Files in temp dir: {os.listdir(self.temp_dir)}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Download error: {e}")
+            raise ClipProcessingError(f"Failed to download video: {str(e)}")
                     logger.info(f"Successfully downloaded to: {downloaded_file}")
                     return downloaded_file
 
