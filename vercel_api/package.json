@@ -1,0 +1,13 @@
+{
+  "name": "clipstream-api",
+  "version": "1.0.0",
+  "description": "YouTube Video Clipper API for Vercel",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel",
+    "deploy:prod": "vercel --prod"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}

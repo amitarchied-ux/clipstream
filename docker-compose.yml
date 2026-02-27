@@ -1,0 +1,31 @@
+# Docker Compose for local development
+# Run with: docker-compose up
+
+version: '3.8'
+
+services:
+  clipstream:
+    build:
+      context: ./streamlit_app
+      dockerfile: Dockerfile
+    container_name: clipstream_app
+    ports:
+      - "8501:8501"
+    environment:
+      - CLIPSTREAM_ENV=development
+      - CLIPSTREAM_LOG_LEVEL=INFO
+      - CLIPSTREAM_MAX_DURATION=1800
+      - CLIPSTREAM_TEMP_DIR=/tmp/clipstream
+    volumes:
+      - clipstream_temp:/tmp/clipstream
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  clipstream_temp:
+    driver: local

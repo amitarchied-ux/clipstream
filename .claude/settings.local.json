@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker:*)",
+      "Bash(py:*)",
+      "Bash(winget install:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -I {} taskkill /F /PID {})",
+      "Bash(powershell:*)",
+      "Bash(/c/Users/amits/AppData/Local/Programs/Python/Python311/Scripts/streamlit.exe run:*)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)",
+      "Bash(rm:*)",
+      "Bash(git init:*)",
+      "Bash(git:*)"
+    ]
+  }
+}

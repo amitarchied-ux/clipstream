@@ -1,0 +1,16 @@
+# Vercel Serverless API Requirements
+
+# FastAPI and ASGI server
+fastapi>=0.104.0
+uvicorn>=0.24.0
+mangum>=0.17.0
+
+# Data validation
+pydantic>=2.5.0
+
+# Video processing (if using in serverless - not recommended for long tasks)
+# yt-dlp>=2023.11.16
+# ffmpeg-python>=0.2.0
+
+# HTTP client
+httpx>=0.25.0
